@@ -1,0 +1,47 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: django-app
+spec:
+  replicas: {{ .Values.djangoApp.replicaCount }}
+  selector:
+    matchLabels:
+      app: django-app
+  template:
+    metadata:
+      labels:
+        app: django-app
+    spec:
+      imagePullSecrets:
+      - name: dockerhub-credentials
+      containers:
+      - name: web-server
+        image: "{{ .Values.djangoApp.image.repository }}:{{ .Values.djangoApp.image.tag }}"
+        imagePullPolicy: {{ .Values.djangoApp.image.pullPolicy }}
+        command: ["gunicorn", "--bind", "0.0.0.0:8000", "trback.wsgi:application"]
+        ports:
+        - containerPort: 8000
+          name: http
+        env:
+        - name: DATABASE_URL
+          value: "postgres://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@$(POSTGRES_HOST):5432/$(POSTGRES_DB)"
+        envFrom:
+        - secretRef:
+            name: {{ .Values.secretsName }}
+        - configMapRef:
+            name: {{ .Values.configMapName }}
+        readinessProbe:
+          httpGet:
+            path: /api/health/
+            port: http
+          initialDelaySeconds: 25
+          periodSeconds: 20
+      - name: celery-worker
+        image: "{{ .Values.djangoApp.image.repository }}:{{ .Values.djangoApp.image.tag }}"
+        imagePullPolicy: {{ .Values.djangoApp.image.pullPolicy }}
+        command: ["celery", "-A", "trback", "worker", "-l", "info"]
+        envFrom:
+        - secretRef:
+            name: {{ .Values.secretsName }}
+        - configMapRef:
+            name: {{ .Values.configMapName }}

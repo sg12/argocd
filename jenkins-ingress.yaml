@@ -1,0 +1,27 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: jenkins-ingress
+  # Ingress и Service находятся в одном namespace - jenkins
+  namespace: jenkins
+spec:
+  # Указываем, что этот Ingress должен обрабатываться нашим NGINX контроллером
+  ingressClassName: nginx
+  tls:
+  - hosts:
+    - jenkins.biletav.ru
+    secretName: jenkins-biletav-ru-tls
+  rules:
+  # Правило для хоста jenkins.biletav.ru
+  - host: "jenkins.biletav.ru"
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            # Имя сервиса Jenkins
+            name: jenkins
+            port:
+              # Порт сервиса Jenkins
+              number: 8080

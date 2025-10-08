@@ -1,0 +1,45 @@
+{{- if .Values.postgres.enabled -}} 
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: postgres
+spec:
+  serviceName: "postgres-svc"
+  replicas: 1 # Для начала запускаем один экземпляр
+  selector:
+    matchLabels:
+      app: postgres
+  template: # Это шаблон для создания нашего пода
+    metadata:
+      labels:
+        app: postgres
+    spec:
+      containers:
+      - name: postgres
+        image: postgres:15 # Используем официальный образ PostgreSQL 15
+        ports:
+        - containerPort: 5432 # ВАЖНО: это порт ВНУТРИ контейнера. Он не конфликтует с хостом!
+        env: # Переменные окружения для настройки PostgreSQL
+          - name: POSTGRES_USER
+            value: "k8s_user" # Имя пользователя для новой БД
+          - name: POSTGRES_DB
+            value: "k8s_db" # Имя новой базы данных
+          - name: POSTGRES_PASSWORD # Пароль берем из нашего секрета
+            valueFrom:
+              secretKeyRef:
+                name:  {{ .Values.appSecretName }} # Имя секрета
+                key: POSTGRES_PASSWORD # Ключ внутри секрета
+          - name: PGDATA # Указываем Postgres, где хранить данные
+            value: /var/lib/postgresql/data/pgdata
+        volumeMounts: # Подключаем наш диск к поду
+        - name: postgres-storage
+          mountPath: /var/lib/postgresql/data # Путь внутри контейнера
+  volumeClaimTemplates: # Шаблон для автоматического создания диска
+  - metadata:
+      name: postgres-storage
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      resources:
+        requests:
+          storage: {{ .Values.postgres.storageSize }} # Размер диска должен совпадать с PVC
+{{- end -}} 

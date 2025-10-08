@@ -1,0 +1,17 @@
+controller:
+  # Говорим, что Ingress Controller будет развернут как DaemonSet
+  # (по одному поду на каждой ноде, у вас она одна).
+  kind: DaemonSet
+
+  # Даем поду прямой доступ к сетевым интерфейсам хост-машины.
+  hostNetwork: true
+  
+  # Отключаем создание Service, так как он не нужен в режиме hostNetwork
+  # для внешнего доступа.
+  service:
+    enabled: false
+  
+  # Отключаем admission webhooks, чтобы избежать конфликтов на порту 443
+  # при старте, если он будет занят чем-то еще.
+  admissionWebhooks:
+    enabled: false

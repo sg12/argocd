@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: Service
+metadata:
+  # Эти два поля обязательны, чтобы Kubernetes понял, что обновлять
+  name: ingress-nginx-controller
+  namespace: ingress-nginx
+spec:
+  ports:
+  # ПОРТ №1: HTTP
+  - name: http
+    port: 8000        # Ваш новый внешний порт
+    protocol: TCP
+    targetPort: http  # Внутренний порт пода Ingress (не меняем)
+
+  # ПОРТ №2: HTTPS (оставляем на стандартном порту)
+  - name: https
+    port: 443
+    protocol: TCP
+    targetPort: https # Внутренний порт пода Ingress (не меняем)

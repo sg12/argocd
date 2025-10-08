@@ -1,0 +1,13 @@
+{{- if .Values.redis.enabled -}}
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis-svc
+spec:
+  type: ClusterIP
+  selector:
+    app: redis
+  ports:
+  - port: {{ .Values.redis.service.port }}
+    targetPort: 6379
+{{- end -}}

@@ -1,0 +1,28 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Values.configMapName }}
+data:
+  # --- Настройки Django ---
+  DEBUG: "True" # Для продакшена всегда False
+  ALLOWED_HOSTS: "biletav.ru,www.biletav.ru,77.222.58.210,.svc.cluster.local," # Ваши домены и IP
+  CORS_ALLOWED_ORIGINS: "https://biletav.ru,https://www.biletav.ru,http://77.222.58.210:5173"
+  BASE_ALLOWED_HOSTS: "biletav.ru,www.biletav.ru,77.222.58.210,"
+  
+  # --- Настройки подключения (базовые части) ---
+  POSTGRES_DB: "k8s_db"
+  POSTGRES_HOST: "postgres-svc" # Имя сервиса PostgreSQL
+  RABBITMQ_HOST: "rabbitmq-svc" # Имя сервиса RabbitMQ
+  REDIS_HOST: "redis-svc"     # Имя сервиса Redis
+  REDIS_URL: "redis://redis-svc:6379/0"
+
+  # --- Не-секретные настройки "Точки" ---
+  TOCHKA_REDIRECT_URI: "https://biletav.ru/"
+  TOCHKA_PAYMENT_LINK_URL: "https://enter.tochka.com/uapi/sbp/v1.0/qr-code/merchant/{merchantId}/{accountId}"
+  TOCHKA_MERCHANT_ID: "MA0004525545"
+  TOCHKA_ACCOUNT_ID: "40802810901500104695/044525104"
+  TOCHKA_LEGAL_ID: "LA0003459261"
+
+  # --- Базовые URL ---
+  BASE_URL: "https://biletav.ru"
+  BASE_COMPANY_URL: "http://localhost:8001" # Замените на реальный адрес

@@ -1,0 +1,58 @@
+# values.yaml
+
+# Настройки вашего Django-приложения
+djangoApp:
+  replicaCount: 2
+  image:
+    repository: trback_web
+    tag: "latest"
+    pullPolicy: Never
+  service:
+    type: ClusterIP
+    port: 8000
+#    nodePort: 30088
+
+ingress:
+  enabled: true # \u003c-- ВКЛЮЧАЕМ Ingress
+  className: "nginx"
+  hostname: biletav.ru
+# Настройки зависимостей
+postgres:
+  enabled: true
+  image: postgres:15
+  storageSize: 5Gi
+  service:
+    port: 5432
+
+
+rabbitmq:
+  enabled: true # \u003c-- ВКЛЮЧЕНО
+  image: rabbitmq:management-alpine
+  storageSize: 2Gi
+  service:
+    amqpPort: 5672
+    managementPort: 15672
+
+
+grafana:
+  ingress:
+    enabled: true # Включаем создание Ingress-правила для Grafana
+    path: /grafana
+    # Имя сервиса Grafana, которое мы уже знаем
+    serviceName: kube-prometheus-stack-grafana
+    # Пространство имен, где работает Grafana
+    serviceNamespace: monitoring
+    # Порт сервиса Grafana
+    servicePort: 3000
+
+
+redis:
+  enabled: true # \u003c-- ВКЛЮЧЕНО
+  image: redis:6.2.6-alpine
+  service:
+    port: 6379
+# Имена ресурсов, которые мы создаем.
+# Мы будем ссылаться на эти имена в шаблонах.
+configMapName: "app-config"
+secretsName: "app-secrets" # \u003c-- НАШ ЕДИНЫЙ ГЛАВНЫЙ СЕКРЕТ
+rabbitmqCookieSecretName: "rabbitmq-cookie"

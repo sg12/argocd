@@ -1,0 +1,21 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: django-app-svc
+  labels: # <-- ДОБАВЬТЕ ЭТУ СЕКЦИЮ
+    app: django-app
+spec:
+  # Используем NodePort для доступа снаружи без конфликтов с портом 80
+  type: {{ .Values.djangoApp.service.type }}
+  selector:
+    # Эта метка должна точно совпадать с меткой в template.metadata.labels вашего Deployment'а
+    app: django-app
+  ports:
+  - name: http
+    protocol: TCP
+    # port: 8000 - внутренний порт, по которому другие поды могут обращаться к этому сервису
+    port: {{ .Values.djangoApp.service.port }}
+    # targetPort: 8000 - порт на контейнере web-server, куда идет трафик
+    targetPort: 8000
+    # nodePort: 30088 - ВНЕШНИЙ порт на вашем сервере. Вы будете заходить по http://IP:30088
+    nodePort: {{ .Values.djangoApp.service.nodePort }}

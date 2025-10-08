@@ -1,0 +1,44 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: redis
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: redis
+  template:
+    metadata:
+      labels:
+        app: redis
+    spec:
+      containers:
+      - name: redis
+        image: redis:6.2.6-alpine
+        ports:
+        - containerPort: 6379
+        
+        # Проверка готовности остается той же
+        readinessProbe:
+          exec:
+            command: ["redis-cli", "ping"]
+          initialDelaySeconds: 15
+          periodSeconds: 10
+          
+        # --- ИЗМЕНЕНИЕ: Вместо PVC используем временную директорию ---
+        volumeMounts:
+        - name: redis-temp-storage
+          mountPath: /data
+
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+          limits:
+            memory: "256Mi"
+            cpu: "500m"
+      
+      # --- ИЗМЕНЕНИЕ: Объявляем том типа emptyDir ---
+      volumes:
+      - name: redis-temp-storage
+        emptyDir: {} # Том будет жить и умирать вместе с подом

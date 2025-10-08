@@ -1,0 +1,46 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: main-ingress
+  namespace: default
+spec:
+  ingressClassName: nginx
+  tls:
+  - hosts:
+    - biletav.ru
+    # Имя секрета, которое мы задали в команде выше
+    secretName: biletav-ru-tls
+  rules:
+  - host: "biletav.ru"
+    http:
+      paths:
+      # ПРАВИЛО №1: Самый специфичный путь идет первым.
+      - path: /api
+        pathType: Prefix
+        backend:
+          service:
+            name: django-app-svc
+            port:
+              number: 8000
+      - path: /admin
+        pathType: Prefix
+        backend:
+          service:
+            name: django-app-svc # <-- Тоже ведет на бэкенд
+            port:
+              number: 8000
+      - path: /static
+        pathType: Prefix
+        backend:
+          service:
+            name: django-app-svc # <-- Тоже ведет на бэкенд
+            port:
+              number: 8000
+      # ПРАВИЛО №2: Самый общий ("catch-all") путь идет последним.
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: frontend-service
+            port:
+              number: 80

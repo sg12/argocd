@@ -1,0 +1,5 @@
+# ingress-upgrade-values.yaml
+controller:
+  # Отключаем ограничение по пространству имен
+  scope:
+    enabled: false

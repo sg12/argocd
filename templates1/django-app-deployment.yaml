@@ -1,0 +1,159 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: django-app
+spec:
+  replicas: {{ .Values.djangoApp.replicaCount }}
+  selector:
+    matchLabels:
+      app: django-app
+  template:
+    metadata:
+      labels:
+        app: django-app
+    spec:
+      containers:
+      # --- Контейнер №1: Веб-сервер Gunicorn ---
+      - name: web-server
+        image: "{{ .Values.djangoApp.image.repository }}:{{ .Values.djangoApp.image.tag }}"
+        imagePullPolicy: {{ .Values.djangoApp.image.pullPolicy }}
+        command: ["gunicorn", "--bind", "0.0.0.0:8000", "trback.wsgi:application"]
+        ports:
+        - containerPort: 8000
+          name: http
+        
+        # --- Полный и правильный набор переменных окружения ---
+        env:
+          # 1. IP пода для ALLOWED_HOSTS
+          - name: POD_IP
+            valueFrom:
+              fieldRef:
+                fieldPath: status.podIP
+          
+          # 2. Базовая часть ALLOWED_HOSTS из ConfigMap
+          - name: BASE_ALLOWED_HOSTS
+            valueFrom:
+              configMapKeyRef:
+                name: app-config
+                key: BASE_ALLOWED_HOSTS
+          
+          # 3. Собираем финальную строку ALLOWED_HOSTS
+          - name: ALLOWED_HOSTS
+            value: "$(BASE_ALLOWED_HOSTS)$(POD_IP)"
+
+          # --- Остальные переменные из ConfigMap ---
+          - name: DEBUG
+            valueFrom: { configMapKeyRef: { name: app-config, key: DEBUG } }
+          - name: CORS_ALLOWED_ORIGINS
+            valueFrom: { configMapKeyRef: { name: app-config, key: CORS_ALLOWED_ORIGINS } }
+          - name: POSTGRES_DB
+            valueFrom: { configMapKeyRef: { name: app-config, key: POSTGRES_DB } }
+          - name: POSTGRES_HOST
+            valueFrom: { configMapKeyRef: { name: app-config, key: POSTGRES_HOST } }
+          - name: RABBITMQ_HOST
+            valueFrom: { configMapKeyRef: { name: app-config, key: RABBITMQ_HOST } }
+          - name: REDIS_URL
+            valueFrom: { configMapKeyRef: { name: app-config, key: REDIS_URL } }
+          - name: TOCHKA_REDIRECT_URI
+            valueFrom: { configMapKeyRef: { name: app-config, key: TOCHKA_REDIRECT_URI } }
+          - name: TOCHKA_PAYMENT_LINK_URL
+            valueFrom: { configMapKeyRef: { name: app-config, key: TOCHKA_PAYMENT_LINK_URL } }
+          - name: TOCHKA_MERCHANT_ID
+            valueFrom: { configMapKeyRef: { name: app-config, key: TOCHKA_MERCHANT_ID } }
+          - name: TOCHKA_ACCOUNT_ID
+            valueFrom: { configMapKeyRef: { name: app-config, key: TOCHKA_ACCOUNT_ID } }
+          - name: TOCHKA_LEGAL_ID
+            valueFrom: { configMapKeyRef: { name: app-config, key: TOCHKA_LEGAL_ID } }
+          - name: BASE_URL
+            valueFrom: { configMapKeyRef: { name: app-config, key: BASE_URL } }
+          - name: BASE_COMPANY_URL
+            valueFrom: { configMapKeyRef: { name: app-config, key: BASE_COMPANY_URL } }
+
+          # --- Переменные из Secret ---
+          - name: SECRET_KEY
+            valueFrom: { secretKeyRef: { name: app-secrets, key: SECRET_KEY } }
+          - name: POSTGRES_USER
+            valueFrom: { secretKeyRef: { name: app-secrets, key: POSTGRES_USER } }
+          - name: POSTGRES_PASSWORD
+            valueFrom: { secretKeyRef: { name: app-secrets, key: POSTGRES_PASSWORD } }
+          - name: RABBITMQ_USER
+            valueFrom: { secretKeyRef: { name: app-secrets, key: RABBITMQ_USER } }
+          - name: RABBITMQ_PASS
+            valueFrom: { secretKeyRef: { name: app-secrets, key: RABBITMQ_PASS } }
+          - name: TOCHKA_CLIENT_ID
+            valueFrom: { secretKeyRef: { name: app-secrets, key: TOCHKA_CLIENT_ID } }
+          - name: TOCHKA_CLIENT_SECRET
+            valueFrom: { secretKeyRef: { name: app-secrets, key: TOCHKA_CLIENT_SECRET } }
+          
+          # --- Сборные URL ---
+          - name: DATABASE_URL
+            value: "postgres://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@$(POSTGRES_HOST):5432/$(POSTGRES_DB)"
+          - name: CELERY_BROKER_URL
+            value: "amqp://$(RABBITMQ_USER):$(RABBITMQ_PASS)@$(RABBITMQ_HOST):5672/"
+
+        readinessProbe:
+          httpGet:
+            path: /api/health/
+            port: http
+          initialDelaySeconds: 25
+          periodSeconds: 20
+          timeoutSeconds: 5
+
+      # --- Контейнер №2: Celery Worker (Сайдкар) ---
+      - name: celery-worker
+        image: "{{ .Values.djangoApp.image.repository }}:{{ .Values.djangoApp.image.tag }}"
+        imagePullPolicy: {{ .Values.djangoApp.image.pullPolicy }}
+        command: ["celery", "-A", "trback", "worker", "-l", "info"]
+        
+        # --- Копируем ТОЧНО ТАКОЙ ЖЕ набор переменных окружения ---
+        env:
+          - name: POD_IP
+            valueFrom: { fieldRef: { fieldPath: status.podIP } }
+          - name: BASE_ALLOWED_HOSTS
+            valueFrom: { configMapKeyRef: { name: app-config, key: BASE_ALLOWED_HOSTS } }
+          - name: ALLOWED_HOSTS
+            value: "$(BASE_ALLOWED_HOSTS)$(POD_IP)"
+          - name: DEBUG
+            valueFrom: { configMapKeyRef: { name: app-config, key: DEBUG } }
+          - name: CORS_ALLOWED_ORIGINS
+            valueFrom: { configMapKeyRef: { name: app-config, key: CORS_ALLOWED_ORIGINS } }
+          - name: POSTGRES_DB
+            valueFrom: { configMapKeyRef: { name: app-config, key: POSTGRES_DB } }
+          - name: POSTGRES_HOST
+            valueFrom: { configMapKeyRef: { name: app-config, key: POSTGRES_HOST } }
+          - name: RABBITMQ_HOST
+            valueFrom: { configMapKeyRef: { name: app-config, key: RABBITMQ_HOST } }
+          - name: REDIS_URL
+            valueFrom: { configMapKeyRef: { name: app-config, key: REDIS_URL } }
+          - name: TOCHKA_REDIRECT_URI
+            valueFrom: { configMapKeyRef: { name: app-config, key: TOCHKA_REDIRECT_URI } }
+          - name: TOCHKA_PAYMENT_LINK_URL
+            valueFrom: { configMapKeyRef: { name: app-config, key: TOCHKA_PAYMENT_LINK_URL } }
+          - name: TOCHKA_MERCHANT_ID
+            valueFrom: { configMapKeyRef: { name: app-config, key: TOCHKA_MERCHANT_ID } }
+          - name: TOCHKA_ACCOUNT_ID
+            valueFrom: { configMapKeyRef: { name: app-config, key: TOCHKA_ACCOUNT_ID } }
+          - name: TOCHKA_LEGAL_ID
+            valueFrom: { configMapKeyRef: { name: app-config, key: TOCHKA_LEGAL_ID } }
+          - name: BASE_URL
+            valueFrom: { configMapKeyRef: { name: app-config, key: BASE_URL } }
+          - name: BASE_COMPANY_URL
+            valueFrom: { configMapKeyRef: { name: app-config, key: BASE_COMPANY_URL } }
+          - name: SECRET_KEY
+            valueFrom: { secretKeyRef: { name: app-secrets, key: SECRET_KEY } }
+          - name: POSTGRES_USER
+            valueFrom: { secretKeyRef: { name: app-secrets, key: POSTGRES_USER } }
+          - name: POSTGRES_PASSWORD
+            valueFrom: { secretKeyRef: { name: app-secrets, key: POSTGRES_PASSWORD } }
+          - name: RABBITMQ_USER
+            valueFrom: { secretKeyRef: { name: app-secrets, key: RABBITMQ_USER } }
+          - name: RABBITMQ_PASS
+            valueFrom: { secretKeyRef: { name: app-secrets, key: RABBITMQ_PASS } }
+          - name: TOCHKA_CLIENT_ID
+            valueFrom: { secretKeyRef: { name: app-secrets, key: TOCHKA_CLIENT_ID } }
+          - name: TOCHKA_CLIENT_SECRET
+            valueFrom: { secretKeyRef: { name: app-secrets, key: TOCHKA_CLIENT_SECRET } }
+          - name: DATABASE_URL
+            value: "postgres://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@$(POSTGRES_HOST):5432/$(POSTGRES_DB)"
+          - name: CELERY_BROKER_URL
+            value: "amqp://$(RABBITMQ_USER):$(RABBITMQ_PASS)@$(RABBITMQ_HOST):5672/"

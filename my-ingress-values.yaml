@@ -1,0 +1,20 @@
+controller:
+  # Используем DaemonSet, это правильно для вашего случая
+  kind: DaemonSet
+
+  # Включаем прямой доступ к сети, это тоже правильно
+  hostNetwork: true
+
+  # --- ВОТ ОН, КЛЮЧ! ---
+  # Это главный параметр, который говорит чарту:
+  # "Сконфигурируй Nginx так, чтобы он слушал порт 8081"
+  containerPort:
+    http: 8081
+
+  # Отключаем Service, так как он не нужен в режиме hostNetwork
+  service:
+    enabled: false
+
+  # Отключаем admission webhooks, чтобы избежать любых других конфликтов портов
+  admissionWebhooks:
+    enabled: false

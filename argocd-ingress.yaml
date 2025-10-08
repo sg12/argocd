@@ -1,0 +1,35 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: argocd-server-ingress
+  namespace: argocd
+  annotations:
+    # --- ВОТ ОНО, РЕШЕНИЕ ---
+    # Эта аннотация заставит Nginx Ingress Controller добавить
+    # заголовок X-Forwarded-Proto: https в запрос, который он отправляет в ArgoCD.
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
+    # Аннотации для сессий оставляем
+    nginx.ingress.kubernetes.io/affinity: "cookie"
+    nginx.ingress.kubernetes.io/session-cookie-name: "argocd.token"
+    # ... и т.д.
+
+spec:
+  ingressClassName: nginx
+  # Мы принимаем HTTPS-трафик снаружи
+  tls:
+  - hosts:
+    - argocd.biletav.ru
+    secretName: argocd-server-tls
+  rules:
+  - host: "argocd.biletav.ru"
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: argocd-server
+            port:
+              # Мы общаемся с бэкендом по обычному HTTP
+              number: 443
