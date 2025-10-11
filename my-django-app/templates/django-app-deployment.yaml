@@ -18,7 +18,7 @@ spec:
       - name: web-server
         image: "{{ .Values.djangoApp.image.repository }}:{{ .Values.djangoApp.image.tag }}"
         imagePullPolicy: {{ .Values.djangoApp.image.pullPolicy }}
-        command: ["gunicorn", "--bind", "0.0.0.0:8000", "trback.wsgi:application"]
+        command: ["gunicorn", "--bind", "0.0.0.0:8000", "--forwarded-allow-ips='*'", "trback.wsgi:application"]
         ports:
         - containerPort: 8000
           name: http
