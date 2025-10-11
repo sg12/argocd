@@ -34,6 +34,9 @@ spec:
           httpGet:
             path: /api/health/
             port: http
+            httpHeaders: # <-- Вот эта секция
+            - name: Host
+              value: "localhost"
           initialDelaySeconds: 25
           periodSeconds: 20
       - name: celery-worker
