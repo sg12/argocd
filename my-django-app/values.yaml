@@ -6,7 +6,7 @@ djangoApp:
   image:
     repository: trback_web
     tag: "build-17"
-    pullPolicy: Never
+    pullPolicy: Always
   service:
     type: ClusterIP
     port: 8000
