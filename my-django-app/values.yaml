@@ -5,7 +5,7 @@ djangoApp:
   replicaCount: 2
   image:
     repository: trback_web
-    tag: "latest"
+    tag: "build-17"
     pullPolicy: Never
   service:
     type: ClusterIP
