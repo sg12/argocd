@@ -16,7 +16,7 @@ spec:
       - name: frontend-nginx
         image: gghotdog/trfront:build-7
         # Эта строка по-прежнему КРИТИЧЕСКИ ВАЖНА
-        imagePullPolicy: Never 
+        imagePullPolicy: IfNotPresent  
         ports:
         - containerPort: 80
 ---
