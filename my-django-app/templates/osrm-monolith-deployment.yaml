@@ -19,13 +19,13 @@ spec:
         ports:
         - containerPort: 3000
           name: api-port
-    resources:
-      limits:
-        memory: "6Gi"
+        resources:
+          limits:
+            memory: "6Gi"
         # Лимит можно оставить 2, или немного уменьшить до 1.5
-        cpu: "1.5"
-      requests:
-        memory: "4Gi" # Запрос по памяти пока оставим, проблема была с CPU
+            cpu: "1.5"
+          requests:
+            memory: "4Gi" # Запрос по памяти пока оставим, проблема была с CPU
         # --- ИЗМЕНЕНИЕ ЗДЕСЬ ---
         # Уменьшаем запрос с "1" до "500m" (половина ядра)
-        cpu: "500m"
+            cpu: "500m"
