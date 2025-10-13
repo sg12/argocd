@@ -1,0 +1,28 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: osrm-monolith-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: osrm-monolith
+  template:
+    metadata:
+      labels:
+        app: osrm-monolith
+    spec:
+      containers:
+      - name: osrm-monolith-container
+        image: gghotdog/osrm-generator:siberia-v1
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 3000
+          name: api-port
+        resources:
+          limits:
+            memory: "6Gi"
+            cpu: "2"
+          requests:
+            memory: "4Gi"
+            cpu: "1"
