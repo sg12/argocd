@@ -28,3 +28,5 @@ data:
   # --- Базовые URL ---
   BASE_URL: "https://biletav.ru"
   BASE_COMPANY_URL: "http://localhost:8001" # Замените на реальный адрес
+
+  OSRM_HOST: "osrm-monolith-service.default.svc.cluster.local:80"
