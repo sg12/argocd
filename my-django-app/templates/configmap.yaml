@@ -17,6 +17,8 @@ data:
   RABBITMQ_HOST: "rabbitmq-svc" # Имя сервиса RabbitMQ
   REDIS_HOST: "redis-svc"     # Имя сервиса Redis
   REDIS_URL: "redis://redis-svc:6379/0"
+  CELERY_BROKER_URL: "redis://redis-svc:6379/0"
+  CELERY_RESULT_BACKEND: "redis://redis-svc:6379/0"
 
   # --- Не-секретные настройки "Точки" ---
   TOCHKA_REDIRECT_URI: "https://biletav.ru/"
