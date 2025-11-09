@@ -1,0 +1,170 @@
+# prometheus.yaml
+#
+# 1. Конфигурационный файл для Prometheus (ConfigMap)
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: prometheus-config
+  namespace: monitoring
+data:
+  prometheus.yml: |
+    # Все, что ниже этой строки и до '---', должно быть сдвинуто вправо
+    # на 2 или более пробелов относительно 'prometheus.yml: |'.
+    # Здесь мы используем 6 пробелов для верхнего уровня prometheus.yml,
+    # и 8 для подэлементов.
+    global:
+      scrape_interval: 15s
+      scrape_timeout: 10s       # Добавлено / Исправлено
+      evaluation_interval: 15s  # Добавлено / Исправлено
+
+    scrape_configs:
+      # Задание №1: Сбор метрик с самого Prometheus
+      - job_name: 'prometheus'
+        static_configs:
+          - targets: ['localhost:9090']
+
+      # Задание №2: Сбор метрик с Argo CD
+      - job_name: 'argocd'
+        static_configs:
+          - targets: ['argocd-metrics.argocd.svc.cluster.local:8082']
+
+      # Задание №3: Сбор метрик с kube-state-metrics
+      - job_name: 'kube-state-metrics'
+        kubernetes_sd_configs:
+          - role: endpoints
+        relabel_configs:
+          - source_labels: [__meta_kubernetes_service_label_app_kubernetes_io_name]
+            regex: kube-state-metrics
+            action: keep
+          - source_labels: [__meta_kubernetes_endpoint_port_name]
+            regex: http-metrics
+            action: keep
+          - source_labels: [__meta_kubernetes_namespace]
+            regex: monitoring
+            action: replace
+            target_label: kubernetes_namespace
+          - source_labels: [__meta_kubernetes_pod_name]
+            regex: (.*)
+            action: replace
+            target_label: kubernetes_pod_name
+          - source_labels: [__address__]
+            regex: (.*)
+            replacement: $1
+            target_label: instance
+        static_configs:
+        - targets: ['kube-state-metrics.kube-system.svc.cluster.local:8080']
+
+      # Задание №4: Сбор метрик с kubelet (cAdvisor)
+      - job_name: 'kubernetes-cadvisor'
+        scheme: https
+        kubernetes_sd_configs:
+          - role: node
+        tls_config:
+          insecure_skip_verify: true
+        bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
+        relabel_configs:
+          - action: labelmap
+            regex: __meta_kubernetes_node_label_(.+)
+          - target_label: __address__
+            replacement: kubernetes.default.svc:443
+          - source_labels: [__meta_kubernetes_node_name]
+            regex: (.+)
+            target_label: __metrics_path__
+            replacement: /api/v1/nodes/${1}/proxy/metrics/cadvisor
+          - source_labels: [__meta_kubernetes_node_name]
+            regex: (.+)
+            target_label: kubernetes_node_name
+            replacement: $1
+
+      # Задание №5: Сбор метрик с kubelet (общесистемные)
+      - job_name: 'kubernetes-nodes'
+        scheme: https
+        kubernetes_sd_configs:
+          - role: node
+        tls_config:
+          insecure_skip_verify: true
+        bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
+        relabel_configs:
+          - action: labelmap
+            regex: __meta_kubernetes_node_label_(.+)
+          - target_label: __address__
+            replacement: kubernetes.default.svc:443
+          - source_labels: [__meta_kubernetes_node_name]
+            regex: (.+)
+            target_label: __metrics_path__
+            replacement: /api/v1/nodes/${1}/proxy/metrics
+          - source_labels: [__meta_kubernetes_node_name]
+            regex: (.+)
+            target_label: kubernetes_node_name
+            replacement: $1
+
+      # Задание №6: Сбор метрик с Node Exporter (если установлен)
+      - job_name: 'node-exporter'
+        kubernetes_sd_configs:
+          - role: pod
+        relabel_configs:
+          - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_scrape]
+            action: keep
+            regex: true
+          - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_port]
+            action: replace
+            regex: (\d+)
+            target_label: __meta_kubernetes_pod_container_port
+          - source_labels: [__address__, __meta_kubernetes_pod_annotation_prometheus_io_port]
+            action: replace
+            regex: ([^:]+)(?::\d+)?;(\d+)
+            target_label: __address__
+            replacement: $1:$2
+          - action: labelmap
+            regex: __meta_kubernetes_pod_label_(.+)
+          - source_labels: [__meta_kubernetes_namespace]
+            action: replace
+            target_label: kubernetes_namespace
+          - source_labels: [__meta_kubernetes_pod_name]
+            action: replace
+            target_label: kubernetes_pod_name
+
+---
+# 2. Сам Prometheus (Deployment)
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: prometheus
+  namespace: monitoring
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: prometheus
+  template:
+    metadata:
+      labels:
+        app: prometheus
+    spec:
+      containers:
+      - name: prometheus
+        image: prom/prometheus:v2.47.2
+        args:
+        - "--config.file=/etc/prometheus/prometheus.yml"
+        ports:
+        - containerPort: 9090
+        volumeMounts:
+        - name: config-volume
+          mountPath: /etc/prometheus
+      volumes:
+      - name: config-volume
+        configMap:
+          name: prometheus-config
+---
+# 3. Сервис для доступа к Prometheus
+apiVersion: v1
+kind: Service
+metadata:
+  name: prometheus-service
+  namespace: monitoring
+spec:
+  selector:
+    app: prometheus
+  ports:
+  - port: 9090
+    targetPort: 9090

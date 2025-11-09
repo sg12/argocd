@@ -1,0 +1,35 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  # Имя нашего развертывания
+  name: osrm-monolith-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      # Метка для связи Deployment'а с подами
+      app: osrm-monolith
+  template:
+    metadata:
+      labels:
+        # Эта метка будет присвоена поду, чтобы Service мог его найти
+        app: osrm-monolith
+    spec:
+      containers:
+      - name: osrm-monolith-container
+        # --- ВАШ ГОТОВЫЙ ОБРАЗ ---
+        image: gghotdog/osrm-generator:siberia-v1
+        # Всегда проверять, нет ли новой версии образа в репозитории
+        imagePullPolicy: Always
+        ports:
+        # Указываем порт 3000, на котором работает ваше Node.js API
+        - containerPort: 3000
+          name: api-port
+        # Задаем ресурсы, которые нужны контейнеру
+        resources:
+          limits:
+            memory: "6Gi" # Лимит по памяти
+            cpu: "2"      # Лимит по CPU (2 ядра)
+          requests:
+            memory: "4Gi" # Сколько памяти зарезервировать при старте
+            cpu: "1"      # Сколько CPU зарезервировать

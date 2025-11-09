@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: Service
+metadata:
+  # Имя нашего сервиса. Django будет обращаться по этому имени.
+  name: osrm-monolith-service
+spec:
+  # Доступен только внутри кластера
+  type: ClusterIP
+  selector:
+    # Направлять трафик на все поды с этой меткой
+    app: osrm-monolith
+  ports:
+    - protocol: TCP
+      # Сервис будет слушать порт 80
+      port: 80
+      # И перенаправлять трафик на порт 3000 в контейнере (где работает ваше API)
+      targetPort: 3000

@@ -1,0 +1,32 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: prometheus
+  namespace: monitoring
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: prometheus
+  template:
+    metadata:
+      labels:
+        app: prometheus
+    spec:
+      # Важно: Убедитесь, что Prometheus ServiceAccount имеет необходимые RBAC права!
+      # По умолчанию используется 'default' ServiceAccount в неймспейсе 'monitoring'.
+      # Если вы создали свой SA, укажите его здесь: serviceAccountName: my-prometheus-sa
+      containers:
+      - name: prometheus
+        image: prom/prometheus:v2.47.2
+        args:
+        - "--config.file=/etc/prometheus/prometheus.yml"
+        ports:
+        - containerPort: 9090
+        volumeMounts:
+        - name: config-volume
+          mountPath: /etc/prometheus
+      volumes:
+      - name: config-volume
+        configMap:
+          name: prometheus-config

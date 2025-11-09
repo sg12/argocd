@@ -1,0 +1,58 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: grafana
+  # Укажите неймспейс, в который хотите установить Grafana, например, 'monitoring'
+  # Если неймспейса 'monitoring' нет, создайте его: kubectl create namespace monitoring
+  namespace: monitoring
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: grafana
+  template:
+    metadata:
+      labels:
+        app: grafana
+    spec:
+      containers:
+      - name: grafana
+        # Используем официальный образ Grafana
+        image: grafana/grafana:10.2.2
+        ports:
+        - containerPort: 3000
+          name: http
+        # Опционально: можно добавить переменные окружения, например, для админского пароля
+        # env:
+        # - name: GF_SECURITY_ADMIN_PASSWORD
+        #   value: "YourSecurePassword"
+        
+        # Опционально: Добавляем Persistent Volume для сохранения дашбордов и настроек
+        # Если этого не сделать, все данные будут теряться при перезапуске пода.
+        volumeMounts:
+        - name: grafana-storage
+          mountPath: /var/lib/grafana
+      volumes:
+      - name: grafana-storage
+        # 'emptyDir' - временное хранилище, удаляется вместе с подом.
+        # Для продакшена замените на 'persistentVolumeClaim'.
+        emptyDir: {}
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: grafana-service
+  namespace: monitoring
+spec:
+  # Используем NodePort, чтобы легко получить доступ к Grafana извне кластера
+  # В продакшене лучше использовать Ingress.
+  type: NodePort
+  selector:
+    app: grafana
+  ports:
+  - port: 3000
+    targetPort: 3000
+    # Этот порт будет открыт на КАЖДОМ узле вашего кластера.
+    # Диапазон обычно 30000-32767. Kubernetes выберет свободный.
+    nodePort: 32000 # <-- Можете указать конкретный порт или убрать эту строку, чтобы Kubernetes выбрал сам
