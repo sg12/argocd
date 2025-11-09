@@ -67,7 +67,13 @@ argocd app sync osrm-service
 - **djangoApp.image.tag**: Тег образа
 - **djangoApp.replicaCount**: Количество реплик
 - **ingress.hostname**: Доменное имя для Ingress
-- **postgres/rabbitmq/redis.enabled**: Включение/отключение зависимостей
+- **postgres/rabbitmq/redis/elasticsearch.enabled**: Включение/отключение зависимостей
+
+#### Зависимости Django приложения:
+- **PostgreSQL**: База данных (порт 5432)
+- **RabbitMQ**: Очередь сообщений (порты 5672, 15672)
+- **Redis**: Кеширование и Celery backend (порт 6379)
+- **Elasticsearch**: Поиск и индексация (порты 9200, 9300)
 
 ### Monitoring Stack
 

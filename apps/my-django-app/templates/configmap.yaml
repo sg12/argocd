@@ -8,8 +8,8 @@ data:
   ALLOWED_HOSTS: "biletav.ru,www.biletav.ru,77.222.58.210,.svc.cluster.local,localhost,*," # Ваши домены и IP
   CORS_ALLOWED_ORIGINS: "https://biletav.ru,https://www.biletav.ru,http://77.222.58.210:5173,http://localhost:5173,"
   BASE_ALLOWED_HOSTS: "biletav.ru,www.biletav.ru,77.222.58.210,"
-  CSRF_TRUSTED_ORIGINS: "https://biletav.ru,https://www.biletav.ru"
-  SECURE_PROXY_SSL_HEADER_ENABLED: "True"
+  CSRF_TRUSTED_ORIGINS: "https://biletav.ru,https://www.biletav.ru,http://localhost:5173,http://127.0.0.1:5173"
+  SECURE_PROXY_SSL_HEADER_ENABLED: "False"
   
   # --- Настройки подключения (базовые части) ---
   POSTGRES_DB: "k8s_db"
@@ -19,6 +19,10 @@ data:
   REDIS_URL: "redis://redis-svc:6379/0"
   CELERY_BROKER_URL: "redis://redis-svc:6379/0"
   CELERY_RESULT_BACKEND: "redis://redis-svc:6379/0"
+
+  # --- Elasticsearch ---
+  ELASTICSEARCH_HOST: "http://elasticsearch-service:9200"
+  ELASTICSEARCH_AUTOSYNC: "True"
 
   # --- Не-секретные настройки "Точки" ---
   TOCHKA_REDIRECT_URI: "https://biletav.ru/"

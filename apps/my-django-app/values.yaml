@@ -51,6 +51,15 @@ redis:
   image: redis:6.2.6-alpine
   service:
     port: 6379
+
+elasticsearch:
+  enabled: true # \u003c-- ВКЛЮЧЕНО
+  image: docker.elastic.co/elasticsearch/elasticsearch:8.11.0
+  storageSize: 5Gi
+  service:
+    httpPort: 9200
+    transportPort: 9300
+
 # Имена ресурсов, которые мы создаем.
 # Мы будем ссылаться на эти имена в шаблонах.
 configMapName: "app-config"
