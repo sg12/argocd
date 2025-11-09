@@ -9,7 +9,7 @@ spec:
   source:
     repoURL: https://github.com/sg12/argocd.git
     targetRevision: HEAD
-    path: apps/my-django-app-chart
+    path: apps/my-django-app
     helm:
       valueFiles:
         - values.yaml

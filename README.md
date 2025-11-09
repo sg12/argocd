@@ -10,7 +10,7 @@ argocd/
 │   ├── django-app.yaml            # Application для Django приложения
 │   ├── monitoring.yaml            # Application для monitoring stack
 │   ├── osrm.yaml                  # Application для OSRM сервиса
-│   └── my-django-app-chart/       # Helm chart для Django приложения
+│   └── my-django-app/             # Helm chart для Django приложения
 │       ├── Chart.yaml
 │       ├── values.yaml
 │       └── templates/
@@ -61,7 +61,7 @@ argocd app sync osrm-service
 
 ### Django Application (Helm Chart)
 
-Основные параметры настраиваются в `apps/my-django-app-chart/values.yaml`:
+Основные параметры настраиваются в `apps/my-django-app/values.yaml`:
 
 - **djangoApp.image.repository**: Образ Django приложения
 - **djangoApp.image.tag**: Тег образа
