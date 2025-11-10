@@ -14,6 +14,18 @@ spec:
     spec:
       imagePullSecrets:
       - name: dockerhub-credentials
+      initContainers:
+      - name: wait-for-elasticsearch
+        image: busybox:1.35
+        command: ['sh', '-c']
+        args:
+        - |
+          echo "Waiting for Elasticsearch to be ready..."
+          until wget -q --spider http://elasticsearch-service:9200/_cluster/health; do
+            echo "Elasticsearch is unavailable - sleeping"
+            sleep 5
+          done
+          echo "Elasticsearch is up - starting Django"
       containers:
       - name: web-server
         image: "{{ .Values.djangoApp.image.repository }}:{{ .Values.djangoApp.image.tag }}"
