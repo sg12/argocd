@@ -60,6 +60,12 @@ elasticsearch:
     httpPort: 9200
     transportPort: 9300
 
+# Настройки автоматических миграций Django
+migrations:
+  enabled: true # Включить автоматические миграции
+  backoffLimit: 3 # Количество попыток при ошибке
+  collectstatic: false # Собирать статические файлы (установите true если нужно)
+
 # Имена ресурсов, которые мы создаем.
 # Мы будем ссылаться на эти имена в шаблонах.
 configMapName: "app-config"
