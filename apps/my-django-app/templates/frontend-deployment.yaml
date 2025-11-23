@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
       - name: frontend-nginx
-        image: gghotdog/trfront:build-69
+        image: gghotdog/trfront:build-70
         # Эта строка по-прежнему КРИТИЧЕСКИ ВАЖНА
         imagePullPolicy: Always 
         ports:
