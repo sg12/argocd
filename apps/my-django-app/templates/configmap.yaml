@@ -22,6 +22,8 @@ data:
 
   # --- Elasticsearch ---
   ELASTICSEARCH_HOST: "http://elasticsearch-service:9200"
+  ELASTICSEARCH_USER: ""
+  ELASTICSEARCH_PASSWORD: ""
   ELASTICSEARCH_AUTOSYNC: "True"
 
   # --- Не-секретные настройки "Точки" ---
