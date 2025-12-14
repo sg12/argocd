@@ -55,6 +55,9 @@ spec:
         image: "{{ .Values.djangoApp.image.repository }}:{{ .Values.djangoApp.image.tag }}"
         imagePullPolicy: {{ .Values.djangoApp.image.pullPolicy }}
         command: ["celery", "-A", "trback", "worker", "-l", "info"]
+        env:                                    # ← ДОБАВИТЬ
+        - name: DATABASE_URL                    # ← ДОБАВИТЬ
+          value: "postgres://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@$(POSTGRES_HOST):5432/$(POSTGRES_DB)"  # ← ДОБАВИТЬ
         envFrom:
         - secretRef:
             name: {{ .Values.secretsName }}
