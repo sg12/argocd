@@ -85,7 +85,7 @@ spec:
               
               # Загружаем бэкап в S3
               echo "Uploading backup to S3..."
-              aws --endpoint-url="${S3_ENDPOINT}" \
+              aws --endpoint-url="${S3_ENDPOINT}" --no-verify-ssl \
                 s3 cp "${BACKUP_PATH}" \
                 "s3://${S3_BUCKET}/${BACKUP_FILE}" || {
                 echo "ERROR: Failed to upload backup to S3!"
@@ -99,7 +99,7 @@ spec:
               
               # Получаем список всех бэкапов и удаляем старые
               echo "Cleaning up old backups (keeping last ${BACKUP_RETENTION_COUNT})..."
-              BACKUP_LIST=$(aws --endpoint-url="${S3_ENDPOINT}" \
+              BACKUP_LIST=$(aws --endpoint-url="${S3_ENDPOINT}" --no-verify-ssl \
                 s3 ls "s3://${S3_BUCKET}/" \
                 | grep "backup_.*\.sql\.gz\.enc" \
                 | sort -r \
@@ -116,7 +116,7 @@ spec:
                   echo "${BACKUP_LIST}" | tail -n "${TO_DELETE_COUNT}" | while IFS= read -r backup_file; do
                     if [ -n "${backup_file}" ]; then
                       echo "Deleting old backup: ${backup_file}"
-                      aws --endpoint-url="${S3_ENDPOINT}" \
+                      aws --endpoint-url="${S3_ENDPOINT}" --no-verify-ssl \
                         s3 rm "s3://${S3_BUCKET}/${backup_file}" || {
                         echo "WARNING: Failed to delete ${backup_file}"
                       }
