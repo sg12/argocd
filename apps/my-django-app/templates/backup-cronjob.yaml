@@ -1,0 +1,175 @@
+{{- if and .Values.backup.enabled .Values.postgres.enabled }}
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: postgres-backup
+  labels:
+    app: postgres-backup
+    chart: {{ .Chart.Name }}-{{ .Chart.Version }}
+    release: {{ .Release.Name }}
+spec:
+  schedule: {{ .Values.backup.schedule | quote }}
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 2
+      template:
+        metadata:
+          labels:
+            app: postgres-backup
+        spec:
+          restartPolicy: OnFailure
+          initContainers:
+          # Ждем, пока PostgreSQL будет готов
+          - name: wait-for-postgres
+            image: busybox:1.35
+            command: ['sh', '-c']
+            args:
+            - |
+              echo "Waiting for PostgreSQL to be ready..."
+              until nc -z postgres-svc 5432; do
+                echo "PostgreSQL is unavailable - sleeping"
+                sleep 2
+              done
+              echo "PostgreSQL is up"
+          containers:
+          - name: postgres-backup
+            image: postgres:15
+            command:
+            - sh
+            - -c
+            - |
+              set -e
+              
+              # Устанавливаем необходимые утилиты
+              echo "Installing required utilities..."
+              export DEBIAN_FRONTEND=noninteractive
+              apt-get update -qq && apt-get install -y -qq awscli gzip openssl || {
+                echo "ERROR: Failed to install required utilities!"
+                exit 1
+              }
+              
+              # Получаем текущую дату и время для имени файла
+              BACKUP_DATE=$(date +%Y%m%d_%H%M%S)
+              BACKUP_FILE="backup_${BACKUP_DATE}.sql.gz.enc"
+              BACKUP_PATH="/tmp/${BACKUP_FILE}"
+              
+              echo "Starting PostgreSQL backup at $(date)"
+              
+              # Выполняем pg_dump с gzip и шифрованием
+              PGPASSWORD="${POSTGRES_PASSWORD}" pg_dump \
+                -h "${POSTGRES_HOST}" \
+                -U "${POSTGRES_USER}" \
+                -d "${POSTGRES_DB}" \
+                --no-owner \
+                --no-acl \
+                | gzip \
+                | openssl enc -aes-256-cbc -pbkdf2 -salt \
+                  -k "${BACKUP_ENCRYPTION_KEY}" \
+                  -out "${BACKUP_PATH}"
+              
+              if [ $? -ne 0 ]; then
+                echo "ERROR: Backup failed!"
+                exit 1
+              fi
+              
+              echo "Backup file created: ${BACKUP_FILE}"
+              BACKUP_SIZE=$(du -h "${BACKUP_PATH}" | cut -f1)
+              echo "Backup size: ${BACKUP_SIZE}"
+              
+              # Настраиваем AWS CLI для S3-совместимого хранилища
+              export AWS_ACCESS_KEY_ID="${S3_ACCESS_KEY}"
+              export AWS_SECRET_ACCESS_KEY="${S3_SECRET_KEY}"
+              export AWS_DEFAULT_REGION="us-east-1"
+              
+              # Загружаем бэкап в S3
+              echo "Uploading backup to S3..."
+              aws --endpoint-url="${S3_ENDPOINT}" \
+                s3 cp "${BACKUP_PATH}" \
+                "s3://${S3_BUCKET}/${BACKUP_FILE}" || {
+                echo "ERROR: Failed to upload backup to S3!"
+                exit 1
+              }
+              
+              echo "Backup uploaded successfully to s3://${S3_BUCKET}/${BACKUP_FILE}"
+              
+              # Удаляем локальный файл
+              rm -f "${BACKUP_PATH}"
+              
+              # Получаем список всех бэкапов и удаляем старые
+              echo "Cleaning up old backups (keeping last ${BACKUP_RETENTION_COUNT})..."
+              BACKUP_LIST=$(aws --endpoint-url="${S3_ENDPOINT}" \
+                s3 ls "s3://${S3_BUCKET}/" \
+                | grep "backup_.*\.sql\.gz\.enc" \
+                | sort -r \
+                | awk '{print $4}')
+              
+              if [ -z "${BACKUP_LIST}" ]; then
+                echo "No existing backups found"
+              else
+                BACKUP_COUNT=$(echo "${BACKUP_LIST}" | wc -l)
+                
+                if [ "${BACKUP_COUNT}" -gt "${BACKUP_RETENTION_COUNT}" ]; then
+                  TO_DELETE_COUNT=$((BACKUP_COUNT - BACKUP_RETENTION_COUNT))
+                  echo "Found ${BACKUP_COUNT} backups, will delete ${TO_DELETE_COUNT} oldest"
+                  echo "${BACKUP_LIST}" | tail -n "${TO_DELETE_COUNT}" | while IFS= read -r backup_file; do
+                    if [ -n "${backup_file}" ]; then
+                      echo "Deleting old backup: ${backup_file}"
+                      aws --endpoint-url="${S3_ENDPOINT}" \
+                        s3 rm "s3://${S3_BUCKET}/${backup_file}" || {
+                        echo "WARNING: Failed to delete ${backup_file}"
+                      }
+                    fi
+                  done
+                else
+                  echo "No old backups to delete (current count: ${BACKUP_COUNT}, retention: ${BACKUP_RETENTION_COUNT})"
+                fi
+              fi
+              
+              echo "Backup completed successfully at $(date)"
+            env:
+            # PostgreSQL креды из существующего секрета
+            - name: POSTGRES_HOST
+              value: "postgres-svc"
+            - name: POSTGRES_DB
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ .Values.configMapName }}
+                  key: POSTGRES_DB
+            - name: POSTGRES_USER
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.secretsName }}
+                  key: POSTGRES_USER
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.secretsName }}
+                  key: POSTGRES_PASSWORD
+            # S3 креды из backup-s3-credentials
+            - name: S3_ENDPOINT
+              value: {{ .Values.backup.s3.endpoint | quote }}
+            - name: S3_BUCKET
+              value: {{ .Values.backup.s3.bucket | quote }}
+            - name: S3_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: backup-s3-credentials
+                  key: access_key
+            - name: S3_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: backup-s3-credentials
+                  key: secret_key
+            # Ключ шифрования из backup-encryption-key
+            - name: BACKUP_ENCRYPTION_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: backup-encryption-key
+                  key: key
+            # Количество бэкапов для хранения
+            - name: BACKUP_RETENTION_COUNT
+              value: {{ .Values.backup.retention.count | quote }}
+{{- end }}
+
