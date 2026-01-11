@@ -66,6 +66,19 @@ migrations:
   backoffLimit: 5 # Количество попыток при ошибке
   collectstatic: false # Собирать статические файлы (установите true если нужно)
 
+# Настройки резервного копирования PostgreSQL
+backup:
+  enabled: true # Включить автоматические бэкапы
+  schedule: "0 */4 * * *" # Расписание: каждые 4 часа
+  s3:
+    endpoint: "https://s3.gis-1.storage.selcloud.ru"
+    bucket: "beckaups"
+    # accessKey и secretKey создаются вручную в секрете backup-s3-credentials
+  encryption:
+    # key создается вручную в секрете backup-encryption-key
+  retention:
+    count: 30 # Количество последних бэкапов для хранения
+
 # Имена ресурсов, которые мы создаем.
 # Мы будем ссылаться на эти имена в шаблонах.
 configMapName: "app-config"
