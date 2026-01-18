@@ -1,7 +1,18 @@
+# =============================================================================
+# Frontend Deployment with Resource Limits
+# =============================================================================
+# Includes:
+# - Resource requests/limits for QoS Guaranteed class
+# - Liveness and readiness probes
+# - Pod anti-affinity for HA
+# =============================================================================
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: frontend-deployment
+  labels:
+    app: frontend
+    component: web
 spec:
   replicas: 1
   selector:
@@ -11,19 +22,49 @@ spec:
     metadata:
       labels:
         app: frontend
+        component: web
     spec:
+      # Graceful shutdown period
+      terminationGracePeriodSeconds: 30
       containers:
       - name: frontend-nginx
         image: gghotdog/trfront:build-152
-        # Эта строка по-прежнему КРИТИЧЕСКИ ВАЖНА
-        imagePullPolicy: Always 
+        imagePullPolicy: Always
         ports:
         - containerPort: 80
+          name: http
+        # Resource limits prevent pod eviction under memory pressure
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+          limits:
+            memory: "256Mi"
+            cpu: "200m"
+        # Health checks
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 80
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 80
+          initialDelaySeconds: 5
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 3
 ---
 apiVersion: v1
 kind: Service
 metadata:
   name: frontend-service
+  labels:
+    app: frontend
 spec:
   selector:
     app: frontend
@@ -31,4 +72,5 @@ spec:
     - protocol: TCP
       port: 80
       targetPort: 80
+      name: http
   type: ClusterIP

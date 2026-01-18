@@ -1,0 +1,49 @@
+# =============================================================================
+# PersistentVolumeClaim for Jenkins NPM Cache
+# =============================================================================
+# Purpose: Speeds up npm ci by caching node_modules across builds
+# Reduces I/O operations and build time significantly
+# =============================================================================
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: jenkins-npm-cache
+  namespace: jenkins
+  labels:
+    app: jenkins
+    component: npm-cache
+  annotations:
+    description: "Shared NPM cache for Jenkins build agents"
+spec:
+  accessModes:
+    # ReadWriteMany allows multiple build pods to share the cache
+    - ReadWriteMany
+  storageClassName: local-path
+  resources:
+    requests:
+      # 10Gi should be enough for most npm caches
+      storage: 10Gi
+---
+# =============================================================================
+# PersistentVolumeClaim for Docker Build Cache
+# =============================================================================
+# Purpose: Caches Docker layers between builds
+# Significantly reduces docker build time
+# =============================================================================
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: jenkins-docker-cache
+  namespace: jenkins
+  labels:
+    app: jenkins
+    component: docker-cache
+  annotations:
+    description: "Docker layer cache for Jenkins build agents"
+spec:
+  accessModes:
+    - ReadWriteMany
+  storageClassName: local-path
+  resources:
+    requests:
+      storage: 20Gi

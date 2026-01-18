@@ -1,0 +1,29 @@
+# jenkins-values.yaml
+
+controller:
+  initContainerSecurityContext:
+    runAsUser: 0
+  
+  serviceType: ClusterIP
+  
+  # --- УПРОЩАЕМ СПИСОК ДО МИНИМУМА ---
+  installPlugins:
+    - kubernetes  # Для агентов в K8s
+    - workflow-aggregator # Для Pipeline-синтаксиса
+    - git # Для работы с Git
+    - configuration-as-code # Для управления конфигурацией
+    - github # Для интеграции с GitHub
+    # Все остальные (blueocean, etc.) мы пока убираем
+
+  resources:
+    requests:
+      cpu: "500m"
+      memory: "1Gi"
+    limits:
+      cpu: "1"
+      memory: "2Gi"
+
+persistence:
+  enabled: true
+  storageClass: "local-path"
+  size: "8Gi"

@@ -1,0 +1,120 @@
+<?xml version='1.1' encoding='UTF-8'?>
+<hudson>
+  <disabledAdministrativeMonitors>
+    <string>hudson.diagnosis.ReverseProxySetupMonitor</string>
+  </disabledAdministrativeMonitors>
+  <version>2.516.2</version>
+  <numExecutors>0</numExecutors>
+  <mode>NORMAL</mode>
+  <useSecurity>true</useSecurity>
+  <authorizationStrategy class="hudson.security.FullControlOnceLoggedInAuthorizationStrategy">
+    <denyAnonymousReadAccess>true</denyAnonymousReadAccess>
+  </authorizationStrategy>
+  <disableRememberMe>false</disableRememberMe>
+  <projectNamingStrategy class="jenkins.model.ProjectNamingStrategy$DefaultProjectNamingStrategy"/>
+  <workspaceDir>${JENKINS_HOME}/workspace/${ITEM_FULL_NAME}</workspaceDir>
+  <buildsDir>${ITEM_ROOTDIR}/builds</buildsDir>
+  <markupFormatter class="hudson.markup.EscapedMarkupFormatter"/>
+  <jdks/>
+  <viewsTabBar class="hudson.views.DefaultViewsTabBar"/>
+  <myViewsTabBar class="hudson.views.DefaultMyViewsTabBar"/>
+  <clouds>
+    <org.csanchez.jenkins.plugins.kubernetes.KubernetesCloud plugin="kubernetes@4371.vb_33b_086d54a_1">
+      <name>kubernetes</name>
+      <templates>
+        <org.csanchez.jenkins.plugins.kubernetes.PodTemplate>
+          <id>499687ada4a0066996a2e0031f9eba1a0467849a138417eff655b8d3c2b543c0</id>
+          <name>default</name>
+          <namespace>jenkins</namespace>
+          <privileged>false</privileged>
+          <capOnlyOnAlivePods>false</capOnlyOnAlivePods>
+          <alwaysPullImage>false</alwaysPullImage>
+          <instanceCap>2147483647</instanceCap>
+          <slaveConnectTimeout>100</slaveConnectTimeout>
+          <idleMinutes>0</idleMinutes>
+          <activeDeadlineSeconds>0</activeDeadlineSeconds>
+          <label>jenkins-jenkins-agent</label>
+          <serviceAccount>default</serviceAccount>
+          <nodeUsageMode>NORMAL</nodeUsageMode>
+          <volumes/>
+          <containers>
+            <org.csanchez.jenkins.plugins.kubernetes.ContainerTemplate>
+              <name>jnlp</name>
+              <image>jenkins/inbound-agent:3327.v868139a_d00e0-6</image>
+              <privileged>false</privileged>
+              <alwaysPullImage>false</alwaysPullImage>
+              <workingDir>/home/jenkins/agent</workingDir>
+              <command></command>
+              <args>${computer.jnlpmac} ${computer.name}</args>
+              <ttyEnabled>false</ttyEnabled>
+              <resourceRequestCpu>512m</resourceRequestCpu>
+              <resourceRequestMemory>512Mi</resourceRequestMemory>
+              <resourceLimitCpu>512m</resourceLimitCpu>
+              <resourceLimitMemory>512Mi</resourceLimitMemory>
+              <envVars>
+                <org.csanchez.jenkins.plugins.kubernetes.model.KeyValueEnvVar>
+                  <key>JENKINS_URL</key>
+                  <value>http://jenkins.jenkins.svc.cluster.local:8080/</value>
+                </org.csanchez.jenkins.plugins.kubernetes.model.KeyValueEnvVar>
+              </envVars>
+              <ports/>
+            </org.csanchez.jenkins.plugins.kubernetes.ContainerTemplate>
+          </containers>
+          <envVars/>
+          <annotations/>
+          <imagePullSecrets/>
+          <agentInjection>false</agentInjection>
+          <yamlMergeStrategy class="org.csanchez.jenkins.plugins.kubernetes.pod.yaml.Overrides"/>
+          <inheritYamlMergeStrategy>false</inheritYamlMergeStrategy>
+          <showRawYaml>true</showRawYaml>
+          <podRetention class="org.csanchez.jenkins.plugins.kubernetes.pod.retention.Never"/>
+        </org.csanchez.jenkins.plugins.kubernetes.PodTemplate>
+      </templates>
+      <serverUrl>https://kubernetes.default</serverUrl>
+      <useJenkinsProxy>false</useJenkinsProxy>
+      <skipTlsVerify>false</skipTlsVerify>
+      <addMasterProxyEnvVars>false</addMasterProxyEnvVars>
+      <capOnlyOnAlivePods>false</capOnlyOnAlivePods>
+      <namespace>jenkins</namespace>
+      <restrictedPssSecurityContext>false</restrictedPssSecurityContext>
+      <webSocket>false</webSocket>
+      <directConnection>false</directConnection>
+      <jenkinsUrl>http://jenkins.jenkins.svc.cluster.local:8080</jenkinsUrl>
+      <jenkinsTunnel>jenkins-agent.jenkins.svc.cluster.local:50000</jenkinsTunnel>
+      <containerCap>10</containerCap>
+      <retentionTimeout>5</retentionTimeout>
+      <connectTimeout>5</connectTimeout>
+      <readTimeout>15</readTimeout>
+      <podLabels>
+        <org.csanchez.jenkins.plugins.kubernetes.PodLabel>
+          <key>jenkins/jenkins-jenkins-agent</key>
+          <value>true</value>
+        </org.csanchez.jenkins.plugins.kubernetes.PodLabel>
+      </podLabels>
+      <usageRestricted>false</usageRestricted>
+      <maxRequestsPerHost>32</maxRequestsPerHost>
+      <waitForPodSec>600</waitForPodSec>
+      <podRetention class="org.csanchez.jenkins.plugins.kubernetes.pod.retention.Never"/>
+      <traits/>
+    </org.csanchez.jenkins.plugins.kubernetes.KubernetesCloud>
+  </clouds>
+  <scmCheckoutRetryCount>0</scmCheckoutRetryCount>
+  <views>
+    <hudson.model.AllView>
+      <owner class="hudson" reference="../../.."/>
+      <name>all</name>
+      <filterExecutors>false</filterExecutors>
+      <filterQueue>false</filterQueue>
+      <properties class="hudson.model.View$PropertyList"/>
+    </hudson.model.AllView>
+  </views>
+  <primaryView>all</primaryView>
+  <slaveAgentPort>50000</slaveAgentPort>
+  <label></label>
+  <crumbIssuer class="hudson.security.csrf.DefaultCrumbIssuer">
+    <excludeClientIPFromCrumb>true</excludeClientIPFromCrumb>
+  </crumbIssuer>
+  <nodeProperties/>
+  <globalNodeProperties/>
+  <nodeRenameMigrationNeeded>false</nodeRenameMigrationNeeded>
+</hudson>

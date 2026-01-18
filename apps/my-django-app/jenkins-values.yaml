@@ -1,29 +1,128 @@
-# jenkins-values.yaml
+# =============================================================================
+# Jenkins Helm Chart Values
+# =============================================================================
+# Optimized configuration for stable CI/CD builds
+# Fixes pod eviction issues with proper resource management
+# =============================================================================
 
 controller:
+  # Security context for init container
   initContainerSecurityContext:
     runAsUser: 0
-  
-  serviceType: ClusterIP
-  
-  # --- УПРОЩАЕМ СПИСОК ДО МИНИМУМА ---
-  installPlugins:
-    - kubernetes  # Для агентов в K8s
-    - workflow-aggregator # Для Pipeline-синтаксиса
-    - git # Для работы с Git
-    - configuration-as-code # Для управления конфигурацией
-    - github # Для интеграции с GitHub
-    # Все остальные (blueocean, etc.) мы пока убираем
 
+  serviceType: ClusterIP
+
+  # Plugins for Kubernetes-based CI/CD
+  installPlugins:
+    - kubernetes               # Kubernetes agent support
+    - workflow-aggregator      # Pipeline syntax
+    - git                      # Git integration
+    - configuration-as-code    # JCasC support
+    - github                   # GitHub integration
+    - credentials-binding      # Secure credentials
+    - docker-workflow          # Docker pipeline steps
+    - pipeline-stage-view      # Visual pipeline view
+
+  # Controller resources (increased for stability)
   resources:
     requests:
       cpu: "500m"
       memory: "1Gi"
     limits:
-      cpu: "1"
-      memory: "2Gi"
+      cpu: "2"
+      memory: "4Gi"
 
+  # JCasC configuration for Kubernetes Cloud
+  JCasC:
+    configScripts:
+      kubernetes-cloud: |
+        jenkins:
+          clouds:
+            - kubernetes:
+                name: "kubernetes"
+                serverUrl: "https://kubernetes.default"
+                namespace: "jenkins"
+                jenkinsUrl: "http://jenkins.jenkins.svc.cluster.local:8080"
+                jenkinsTunnel: "jenkins-agent.jenkins.svc.cluster.local:50000"
+                containerCap: 10
+                # Pod retention - keep on failure for debugging
+                podRetention: "onFailure"
+                # Connection settings
+                connectTimeout: 60
+                readTimeout: 60
+                # Default pod template with optimized resources
+                templates:
+                  - name: "default"
+                    namespace: "jenkins"
+                    label: "jenkins-jenkins-agent"
+                    nodeUsageMode: "NORMAL"
+                    # Pod stays alive for 30 min after last use
+                    idleMinutes: 30
+                    # Maximum build time: 1 hour
+                    activeDeadlineSeconds: 3600
+                    # Graceful shutdown
+                    podRetention: "onFailure"
+                    containers:
+                      - name: "jnlp"
+                        image: "jenkins/inbound-agent:3327.v868139a_d00e0-6"
+                        alwaysPullImage: false
+                        workingDir: "/home/jenkins/agent"
+                        # Increased resources for build stability
+                        resourceRequestCpu: "500m"
+                        resourceRequestMemory: "1Gi"
+                        resourceLimitCpu: "2000m"
+                        resourceLimitMemory: "4Gi"
+                        ttyEnabled: true
+                    # NodeSelector for stable nodes (optional)
+                    # nodeSelector: "node-role.kubernetes.io/worker=true"
+                    # Pod labels for PDB
+                    yaml: |
+                      apiVersion: v1
+                      kind: Pod
+                      metadata:
+                        labels:
+                          jenkins/jenkins-jenkins-agent: "true"
+                      spec:
+                        terminationGracePeriodSeconds: 3600
+
+# Agent configuration (additional settings)
+agent:
+  enabled: true
+  # Default agent resources
+  resources:
+    requests:
+      cpu: "500m"
+      memory: "1Gi"
+    limits:
+      cpu: "2000m"
+      memory: "4Gi"
+  # Pod retention on failure
+  podRetention: "onFailure"
+
+# Persistence configuration
 persistence:
   enabled: true
   storageClass: "local-path"
-  size: "8Gi"
+  size: "16Gi"
+  # Access mode
+  accessMode: "ReadWriteOnce"
+
+# Service account
+serviceAccount:
+  create: true
+  name: jenkins
+
+# RBAC for Kubernetes operations
+rbac:
+  create: true
+  readSecrets: true
+
+# Additional volumes for caching
+additionalVolumes:
+  - name: npm-cache
+    persistentVolumeClaim:
+      claimName: jenkins-npm-cache
+
+additionalVolumeMounts:
+  - name: npm-cache
+    mountPath: /root/.npm

@@ -1,0 +1,45 @@
+# =============================================================================
+# PodDisruptionBudget for Jenkins Build Agents
+# =============================================================================
+# Purpose: Protects Jenkins build pods from voluntary disruptions (eviction)
+# This prevents Kubernetes from evicting running build pods during:
+# - Node maintenance
+# - Cluster autoscaler operations
+# - Rolling updates
+# =============================================================================
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: jenkins-agent-pdb
+  namespace: jenkins
+  labels:
+    app: jenkins
+    component: agent-protection
+spec:
+  # At least 1 build pod must remain available during disruptions
+  minAvailable: 1
+  selector:
+    matchLabels:
+      # Matches Jenkins agent pods
+      jenkins/jenkins-jenkins-agent: "true"
+---
+# =============================================================================
+# PodDisruptionBudget for Jenkins Controller
+# =============================================================================
+# Purpose: Protects Jenkins controller from disruptions
+# =============================================================================
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: jenkins-controller-pdb
+  namespace: jenkins
+  labels:
+    app: jenkins
+    component: controller-protection
+spec:
+  # Jenkins controller must always be available
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/component: jenkins-controller
+      app.kubernetes.io/instance: jenkins
