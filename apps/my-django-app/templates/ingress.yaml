@@ -3,18 +3,31 @@ kind: Ingress
 metadata:
   name: main-ingress
   namespace: default
+  annotations:
+    # WebSocket поддержка
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
+    nginx.ingress.kubernetes.io/proxy-connect-timeout: "3600"
+    nginx.ingress.kubernetes.io/websocket-services: "django-app-svc"
+    nginx.ingress.kubernetes.io/upstream-hash-by: "$request_uri"
 spec:
   ingressClassName: nginx
   tls:
   - hosts:
     - biletav.ru
-    # Имя секрета, которое мы задали в команде выше
     secretName: biletav-ru-tls
   rules:
   - host: "biletav.ru"
     http:
       paths:
-      # ПРАВИЛО №1: Самый специфичный путь идет первым.
+      # WebSocket endpoint - ПЕРВЫМ (самый специфичный)
+      - path: /ws
+        pathType: Prefix
+        backend:
+          service:
+            name: django-app-svc
+            port:
+              number: 8000
       - path: /api
         pathType: Prefix
         backend:
@@ -26,17 +39,17 @@ spec:
         pathType: Prefix
         backend:
           service:
-            name: django-app-svc # <-- Тоже ведет на бэкенд
+            name: django-app-svc
             port:
               number: 8000
       - path: /static
         pathType: Prefix
         backend:
           service:
-            name: django-app-svc # <-- Тоже ведет на бэкенд
+            name: django-app-svc
             port:
               number: 8000
-      # ПРАВИЛО №2: Самый общий ("catch-all") путь идет последним.
+      # Catch-all для frontend - ПОСЛЕДНИМ
       - path: /
         pathType: Prefix
         backend:
