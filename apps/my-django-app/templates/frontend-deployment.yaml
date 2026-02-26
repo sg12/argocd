@@ -28,7 +28,7 @@ spec:
       terminationGracePeriodSeconds: 30
       containers:
       - name: frontend-nginx
-        image: gghotdog/trfront:build-269
+        image: gghotdog/trfront:build-270
         imagePullPolicy: Always
         ports:
         - containerPort: 80
