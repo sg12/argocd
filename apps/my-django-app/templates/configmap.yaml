@@ -42,4 +42,13 @@ data:
   BASE_URL: "https://biletav.ru"
   BASE_COMPANY_URL: "http://localhost:8001" # Замените на реальный адрес
 
+  # --- Email (отправка чеков) ---
+  EMAIL_BACKEND: "django.core.mail.backends.smtp.EmailBackend"
+  EMAIL_HOST: "smtp.yandex.ru"
+  EMAIL_PORT: "465"
+  EMAIL_USE_SSL: "True"
+  EMAIL_USE_TLS: "False"
+  EMAIL_HOST_USER: "admin@biletav.ru"
+  DEFAULT_FROM_EMAIL: "noreply@biletav.ru"
+
   OSRM_HOST: "osrm-monolith-service.default.svc.cluster.local:80"
