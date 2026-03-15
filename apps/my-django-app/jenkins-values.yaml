@@ -17,7 +17,7 @@ controller:
     - kubernetes               # Kubernetes agent support
     - workflow-aggregator      # Pipeline syntax
     - git                      # Git integration
-    - configuration-as-code    # JCasC support
+    - configuration-as-code:2006.v001a_2ca_6b_574  # JCasC support - pinned version
     - github                   # GitHub integration
     - credentials-binding      # Secure credentials
     - docker-workflow          # Docker pipeline steps
@@ -68,10 +68,10 @@ controller:
                         alwaysPullImage: false
                         workingDir: "/home/jenkins/agent"
                         # Increased resources for build stability
-                        resourceRequestCpu: "500m"
-                        resourceRequestMemory: "1Gi"
-                        resourceLimitCpu: "2000m"
-                        resourceLimitMemory: "4Gi"
+                        resourceRequestCpu: "1000m"
+                        resourceRequestMemory: "2Gi"
+                        resourceLimitCpu: "4000m"
+                        resourceLimitMemory: "8Gi"
                         ttyEnabled: true
                     # NodeSelector for stable nodes (optional)
                     # nodeSelector: "node-role.kubernetes.io/worker=true"
@@ -88,14 +88,14 @@ controller:
 # Agent configuration (additional settings)
 agent:
   enabled: true
-  # Default agent resources
+  # Default agent resources - increased for npm/vite builds
   resources:
     requests:
-      cpu: "500m"
-      memory: "1Gi"
+      cpu: "1000m"
+      memory: "2Gi"
     limits:
-      cpu: "2000m"
-      memory: "4Gi"
+      cpu: "4000m"
+      memory: "8Gi"
   # Pod retention on failure
   podRetention: "onFailure"
 
