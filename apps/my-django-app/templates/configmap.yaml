@@ -8,7 +8,7 @@ data:
   DEBUG: "False"
 
   # --- Алерты (Telegram + Email) ---
-  ALERT_TELEGRAM_CHAT_ID: ""
+  ALERT_TELEGRAM_CHAT_ID: "897464874"
   ALERT_EMAIL: ""
   ALLOWED_HOSTS: "biletav.ru,www.biletav.ru,77.222.58.210,.svc.cluster.local,localhost,*," # Ваши домены и IP
   CORS_ALLOWED_ORIGINS: "https://biletav.ru,https://www.biletav.ru,http://77.222.58.210:5173,http://localhost:5173,"
