@@ -17,6 +17,11 @@ spec:
       containers:
       - name: postgres
         image: {{ .Values.postgres.image }}
+        args:
+          - "-c"
+          - "max_connections=200"
+          - "-c"
+          - "shared_buffers=256MB"
         ports:
         - containerPort: 5432
         envFrom:
