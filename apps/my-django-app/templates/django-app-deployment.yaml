@@ -30,7 +30,7 @@ spec:
       - name: web-server
         image: "{{ .Values.djangoApp.image.repository }}:{{ .Values.djangoApp.image.tag }}"
         imagePullPolicy: {{ .Values.djangoApp.image.pullPolicy }}
-        command: ["daphne", "-b", "0.0.0.0", "-p", "8000", "trback.asgi:application"]
+        command: ["gunicorn", "trback.asgi:application", "-k", "uvicorn.workers.UvicornWorker", "-w", "3", "-b", "0.0.0.0:8000", "--timeout", "120"]
         ports:
         - containerPort: 8000
           name: http
