@@ -4,6 +4,11 @@ metadata:
   name: django-app
 spec:
   replicas: {{ .Values.djangoApp.replicaCount }}
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 0
+      maxSurge: 1
   selector:
     matchLabels:
       app: django-app
@@ -30,7 +35,7 @@ spec:
       - name: web-server
         image: "{{ .Values.djangoApp.image.repository }}:{{ .Values.djangoApp.image.tag }}"
         imagePullPolicy: {{ .Values.djangoApp.image.pullPolicy }}
-        command: ["gunicorn", "trback.asgi:application", "-k", "uvicorn.workers.UvicornWorker", "-w", "3", "-b", "0.0.0.0:8000", "--timeout", "120"]
+        command: ["gunicorn", "trback.asgi:application", "-k", "uvicorn.workers.UvicornWorker", "-w", "3", "-b", "0.0.0.0:8000", "--timeout", "120", "--preload"]
         ports:
         - containerPort: 8000
           name: http
@@ -46,11 +51,22 @@ spec:
           httpGet:
             path: /api/health/
             port: http
-            httpHeaders: # <-- Вот эта секция
+            httpHeaders:
             - name: Host
               value: "localhost"
-          initialDelaySeconds: 25
-          periodSeconds: 20
+          initialDelaySeconds: 10
+          periodSeconds: 5
+          failureThreshold: 3
+        livenessProbe:
+          httpGet:
+            path: /api/health/
+            port: http
+            httpHeaders:
+            - name: Host
+              value: "localhost"
+          initialDelaySeconds: 30
+          periodSeconds: 15
+          failureThreshold: 3
       - name: celery-worker
         image: "{{ .Values.djangoApp.image.repository }}:{{ .Values.djangoApp.image.tag }}"
         imagePullPolicy: {{ .Values.djangoApp.image.pullPolicy }}
