@@ -4,6 +4,10 @@ metadata:
   name: main-ingress
   namespace: default
   annotations:
+    # Автовыпуск и автопродление TLS через cert-manager + Let's Encrypt
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    # Редирект www.biletav.ru -> biletav.ru
+    nginx.ingress.kubernetes.io/from-to-www-redirect: "true"
     # WebSocket поддержка
     nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
     nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
@@ -17,6 +21,7 @@ spec:
   tls:
   - hosts:
     - biletav.ru
+    - www.biletav.ru
     secretName: biletav-ru-tls
   rules:
   - host: "biletav.ru"
