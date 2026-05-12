@@ -5,7 +5,7 @@ djangoApp:
   replicaCount: 2
   image:
     repository: gghotdog/trback
-    tag:                                                                                                                    build-352
+    tag:                                                                                                                     build-353
     pullPolicy: Always
   service:
     type: ClusterIP
