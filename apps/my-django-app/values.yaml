@@ -64,7 +64,7 @@ elasticsearch:
 migrations:
   enabled: true # Включить автоматические миграции
   backoffLimit: 5 # Количество попыток при ошибке
-  collectstatic: false # Собирать статические файлы (установите true если нужно)
+  collectstatic: true
 
 # Настройки резервного копирования PostgreSQL
 backup:
