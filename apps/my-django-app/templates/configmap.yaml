@@ -52,3 +52,7 @@ data:
   DEFAULT_FROM_EMAIL: "noreply@biletav.ru"
 
   OSRM_HOST: "osrm-monolith-service.default.svc.cluster.local:80"
+
+  # --- Unified Sale v2 feature flags ---
+  USE_UNIFIED_SALE_FACADE_INTERNAL: "true"
+  USE_UNIFIED_SALE_FACADE_ARTMARK: "true"
