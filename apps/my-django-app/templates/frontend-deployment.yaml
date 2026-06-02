@@ -30,7 +30,7 @@ spec:
         - name: dockerhub-creds
       containers:
       - name: frontend-nginx
-        image: gghotdog/trfront:build-531
+        image: gghotdog/trfront:build-532
         imagePullPolicy: Always
         ports:
         - containerPort: 80
